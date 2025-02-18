@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
 
 void main() {
   runApp(const MyApp());
 }
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -19,10 +18,8 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
 class TelaRapida extends StatelessWidget {
   const TelaRapida({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,7 +29,7 @@ class TelaRapida extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.network(
-              'https://cdn.pixabay.com/photo/2013/07/13/11/28/dentist-158225_1280.png',
+  'https://cdn.pixabay.com/photo/2013/07/13/11/28/dentist-158225_1280.png',
               height: 150,
               width: 150,
             ),
@@ -69,10 +66,8 @@ class TelaRapida extends StatelessWidget {
     );
   }
 }
-
 class LoginTela extends StatelessWidget {
   const LoginTela({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -141,10 +136,8 @@ class LoginTela extends StatelessWidget {
     );
   }
 }
-
 class TelaCadastro extends StatelessWidget {
   const TelaCadastro({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -196,10 +189,8 @@ class TelaCadastro extends StatelessWidget {
     );
   }
 }
-
 class TelaInicial extends StatelessWidget {
   const TelaInicial({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -222,11 +213,11 @@ class TelaInicial extends StatelessWidget {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
+          const Expanded(
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Text('Nome: Gladston Gabriel'),
                   Text('Idade: 19 anos'),
                   Text('Exames realizados: 0'),
@@ -241,9 +232,9 @@ class TelaInicial extends StatelessWidget {
               children: [
                 TextButton(onPressed: () {}, child: const Text('Minhas Informações', style: TextStyle(color: Colors.white))),
                 
-                TextButton(onPressed: () { Navigator.push( context, MaterialPageRoute(builder: (context) => TelaExames()),);}, child: const Text('Exames', style: TextStyle(color: Colors.white))),
+                TextButton(onPressed: () { Navigator.push( context, MaterialPageRoute(builder: (context) => const TelaExames()),);}, child: const Text('Exames', style: TextStyle(color: Colors.white))),
                 
-                TextButton(onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (context)=> TelaInfo()),);}, child: const Text('Info', style: TextStyle(color: Colors.white))),
+                TextButton(onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (context)=> const TelaInfo()),);}, child: const Text('Info', style: TextStyle(color: Colors.white))),
               ],
             ),
           ),
@@ -253,14 +244,52 @@ class TelaInicial extends StatelessWidget {
   }
 }
 
-class TelaExames extends StatelessWidget {
+class TelaExames extends StatefulWidget {
   const TelaExames({super.key});
+
+  @override
+  State<TelaExames> createState() => _TelaExamesState();
+}
+
+class _TelaExamesState extends State<TelaExames> {
+  List<CameraDescription> cameras = [];
+  CameraController? cameraController;
+  bool isCameraOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupCameraController();
+  }
+
+  @override
+  void dispose() {
+    cameraController?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _setupCameraController() async {
+    try {
+      cameras = await availableCameras();
+      if (cameras.isNotEmpty) {
+        cameraController =
+            CameraController(cameras.first, ResolutionPreset.high);
+        await cameraController!.initialize();
+        setState(() {});
+      }
+    } catch (e) {
+      print("Erro ao iniciar a câmera: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dental Insight - Meus Exames', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Dental Insight - Meus Exames',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.blue,
         actions: [
           IconButton(
@@ -280,21 +309,24 @@ class TelaExames extends StatelessWidget {
         children: [
           Expanded(
             child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Text('Seus exames realizados constam aqui.'),
-                ],
-              ),
+              child: isCameraOpen
+                  ? _buildCameraPreview()
+                  : const Text('Seus exames realizados constam aqui.'),
             ),
           ),
-          
           Container(
             color: Colors.blue,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                IconButton(icon: Icon(Icons.add_a_photo, color: Colors.white), onPressed: () {}, ),
+                IconButton(
+                  icon: const Icon(Icons.add_a_photo, color: Colors.white),
+                  onPressed: () {
+                    setState(() {
+                      isCameraOpen = !isCameraOpen;
+                    });
+                  },
+                ),
               ],
             ),
           ),
@@ -302,11 +334,39 @@ class TelaExames extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildCameraPreview() {
+    if (cameraController == null || !cameraController!.value.isInitialized) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Column(
+      children: [
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.4,
+          width: MediaQuery.of(context).size.width * 0.8,
+          child: CameraPreview(cameraController!),
+        ),
+        IconButton(
+          onPressed: () async {
+            try {
+              XFile picture = await cameraController!.takePicture();
+              print("Imagem salva em: ${picture.path}");
+              setState(() {
+                isCameraOpen = false;
+              });
+            } catch (e) {
+              print("Erro ao capturar imagem: $e");
+            }
+          },
+          icon: const Icon(Icons.camera, color: Colors.blue),
+        ),
+      ],
+    );
+  }
 }
 
 class TelaInfo extends StatelessWidget {
   const TelaInfo({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -329,11 +389,11 @@ class TelaInfo extends StatelessWidget {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
+          const Expanded(
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Text('Aqui constam informações do produto e da equipe.'),
                 ],
               ),
@@ -355,5 +415,3 @@ class TelaInfo extends StatelessWidget {
     );
   }
 }
-
-
