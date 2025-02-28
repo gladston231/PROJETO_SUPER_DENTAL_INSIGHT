@@ -1,0 +1,2 @@
+C:/Users/kevin/Documents/GitHub/Faculdade/Projetos Flutter/PROJETO_SUPER_DENTAL_INSIGHT/Projeto_app/android/app/.cxx/RelWithDebInfo/1q5s1my4/x86/CMakeFiles/edit_cache.dir
+C:/Users/kevin/Documents/GitHub/Faculdade/Projetos Flutter/PROJETO_SUPER_DENTAL_INSIGHT/Projeto_app/android/app/.cxx/RelWithDebInfo/1q5s1my4/x86/CMakeFiles/rebuild_cache.dir
